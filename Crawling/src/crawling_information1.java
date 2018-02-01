@@ -61,23 +61,44 @@ public class crawling_information1{
 
 	public static void Crawling(){    //크롤링을 실행하는 클래스
 
-		String[] urllist = new String[100];  //url리스트 배열
+		String[] urllist = new String[100];       //url리스트 배열
+		String[] numberlist = new String[100];   //번호 배열
+		String[] titlelist = new String[100];    //제목 배열
+		String[] writerlist = new String[100];   //작성자 배열
+		String[] timelist = new String[100];     //작성날짜 배열
+		
 		try{
+			FileWriter fw = new FileWriter("output1.txt");
 			JSONArray informationarray = new JSONArray();
 			doc = Jsoup.connect("http://computer.cnu.ac.kr/index.php?mid=notice").get();  //Jsoup라이브러리의 connect함수를 이용해 크롤링한 내용을 doc에 저장
 			url = Jsoup.connect("http://computer.cnu.ac.kr/index.php?mid=notice").get();
-			String title = doc.title();  //웹페이지 타이틀을 저장
-			System.out.println("크롤링한 페이지 : "+title);  //웹페이지 타이틀 출력
 			System.out.println();
-			Elements topic = doc.select("tbody>tr");   //공지들 한줄 한줄을 선택하여 Elements타입의 topic변수에 저장
-			Elements urladdress = url.select(".title>a");
-			int index =0;  
-			for(Element topics : topic){
-				JSONObject jsonObject = new JSONObject();
-				jsonObject.put("number", index);
-				jsonObject.put("text", topics.text());
-				informationarray.add(jsonObject);
-				index++;
+			Elements number = doc.select("tbody>tr>.no");   //공지사항의 번호
+			Elements title = doc.select("tbody>tr>.title");  //공지사항의 제목
+			Elements writer = doc.select("tbody>tr>.author");  //공지사항의 작성자
+			Elements time = doc.select("tbody>tr>.time");   //공지사항의 작성날짜
+			
+			Elements urladdress = url.select(".title>a");  //항목의 url
+			int numberindex =0; int titleindex =0; int writerindex =0; int timeindex =0;  
+			for(Element numbers : number){   
+				numberlist[numberindex] = numbers.text();
+//				System.out.println(numberlist[numberindex]);
+				numberindex++;
+			}
+			System.out.println();
+			for(Element titles : title) {
+				titlelist[titleindex++] = titles.text();
+//				System.out.print(titles.text()+" ");
+			}
+			System.out.println();
+			for(Element writers : writer) {
+				writerlist[writerindex++] = writers.text();
+//				System.out.print(writers.text()+" ");
+			}
+			System.out.println();
+			for(Element times : time) {
+				timelist[timeindex++] = times.text();
+//				System.out.print(times.text()+" ");
 			}
 			int i=0;
 			for (Element urladdresses : urladdress) {
@@ -85,15 +106,21 @@ public class crawling_information1{
 				i++;
 			}
 			int j =0;
-			while(urllist[j] !=null) {
+			while(urllist[j] !=null) {   //항목들의 주소값들을 배열에 입력
 				logincrawling(urllist[j]);
 				j++;
 			}
-			String jsoninfo = informationarray.toJSONString();  //제이슨파일 내용 jsoninfo변수에 저장
-			FileWriter file = new FileWriter("information1.json");
-			file.write(jsoninfo.toString());
-			file.flush();
-			file.close();
+//			String jsoninfo = informationarray.toJSONString();  //제이슨파일 내용 jsoninfo변수에 저장
+//			FileWriter file = new FileWriter("information1.json");
+//			file.write(jsoninfo.toString());
+//			file.flush();
+//			file.close();
+			for(int a =0; a<numberindex; a++) {
+				System.out.println(a+" "+numberlist[a]+" "+titlelist[a]+" "+writerlist[a]+" "+timelist[a]);
+				fw.write("\""+numberlist[a]+"\",\""+titlelist[a]+"\",\""+writerlist[a]+"\",\""+timelist[a]+"\",\""+a+"\"\r\n");
+			}
+			fw.flush();
+			fw.close();
 			String contentjsoninfo = contentarray.toJSONString();  //항목 내용에 관한 제이슨파일 내용을 contentjsoninfo변수에 저장
 			FileWriter file1 = new FileWriter("information1content.json");
 			file1.write(contentjsoninfo.toString());
@@ -106,7 +133,7 @@ public class crawling_information1{
 	}
 
 
-	public static void logincrawling(String crawlingurl) throws IOException {
+	public static void logincrawling(String crawlingurl) throws IOException {   //로그인 후의 공지사항 내용을 크롤링하는 함수
 		String userAgent = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36";
 
 		Connection.Response loginPageResponse = Jsoup.connect("https://computer.cnu.ac.kr/index.php?act=dispMemberLoginForm")
